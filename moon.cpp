@@ -21,7 +21,7 @@ void convert(ushort *src, ushort *dst, int xsize, int ysize);
 
 void cvText(Mat img, const char* text, int x, int y)
 {
-    putText(img, text, Point2f(x, y), FONT_HERSHEY_PLAIN, 3, CV_RGB(65000, 15000, 15000), 5, 8);
+    putText(img, text, Point2f(x, y), FONT_HERSHEY_PLAIN, 1, CV_RGB(65000, 15000, 15000), 1, 8);
 }
 
 //--------------------------------------------------------------------------------------
@@ -119,7 +119,7 @@ int  main()
     Mat    image(Size(width, height), CV_16UC1);
     Mat    image_color(Size(width, height), CV_16UC3);
     Mat	   image_add(Size(width, height), CV_16UC1); 
-    Mat	   tmp;
+    Mat	   tmp(Size(width/2, height/2), CV_16UC1);
  
     printf("%d\n", CLOCKS_PER_SEC);
     
@@ -149,6 +149,11 @@ int  main()
  
     bool guiding = false;
     char dark_mode = 0;
+    double minVal;
+    double maxVal;
+    Point  minLoc;
+    Point  maxLoc;
+
  
     while(1) {
        	bool got_it;
@@ -199,8 +204,8 @@ int  main()
 		guiding^=1;
 		if (guiding == 0) {
 				guide_count = 0;
-				max_x = 0;
-				max_y = 0;	
+				max_x = -1;
+				max_y = -1;	
 		}	
 		break;
 	   case 'D':
@@ -211,12 +216,8 @@ int  main()
 		break; 
 	  }
         
-        double minVal;
-        double maxVal;
-        Point  minLoc;
-        Point  maxLoc;
         
-        minMaxLoc(image(Rect(50, 50, width - 100, height - 100)), &minVal, &maxVal, &minLoc, &maxLoc);
+        //minMaxLoc(image(Rect(50, 50, width - 100, height - 100)), &minVal, &maxVal, &minLoc, &maxLoc);
         
         Mat tmp;
         
@@ -229,7 +230,7 @@ int  main()
  
 	    sprintf(buf, "rec=%d, dk=%d, cap = %d", recording, dark_mode, cap);
             cvText(image_color, buf, 40,40);
-	    sprintf(buf, "exp =%f, gain=%d", exp, gain);
+	    sprintf(buf, "exp =%f, gain=%d temp=%f", exp, gain, getSensorTemp());
             cvText(image_color, buf, 40,65);
             sprintf(buf, "%d %d, %d %d = %f", max_x, max_y, maxLoc.x, maxLoc.y, maxVal);
             cvText(image_color, buf, 40,80);
@@ -241,7 +242,7 @@ int  main()
         
         if (guiding) {
 
-#define	RATIO	15	
+#define	RATIO	7	
  
 	    if ((guide_count % RATIO) == 0) {
 	   	image_add = Scalar(0); 
@@ -254,9 +255,10 @@ int  main()
 
 	    if (guide_count == (RATIO-1)) {
         	
-		resize(image_add, tmp, image_add.size(), 0.5, 0.5, INTER_AREA);	
-		minMaxLoc(tmp(Rect(75, 75, width/2 - 100, height/2 - 100)), &minVal, &maxVal, &minLoc, &maxLoc);
-		imshow("guide", tmp);
+		medianBlur(image_add, tmp, 3);	
+		minMaxLoc(tmp, &minVal, &maxVal, &minLoc, &maxLoc);
+		circle(tmp, maxLoc, 8, CV_RGB(32000, 32000, 32000));  	
+		imshow("guide", tmp * 2);
 	    	if (max_x < 0) {
                 	max_x = maxLoc.x;
                 	max_y = maxLoc.y;

@@ -260,14 +260,14 @@ void get_dk()
 {
     FILE *bias_file = fopen("./dk.raw", "rb");
     
-    for (int i = 0; i < 2000; i++) {
+    for (int i = 0; i < 700; i++) {
         fread(tmp_array, 1, SX*SY*sizeof(ushort), bias_file);
         for (int j = 0;  j < SX*SY; j++)
             bias[j] += (float)tmp_array[j];
     }
     
     for (int j = 0; j < SX*SY; j++) {
-        bias[j] /= 2000.0;
+        bias[j] /= 700.0;
     }
     
     fclose(bias_file);
@@ -277,7 +277,7 @@ void get_std()
 {
     FILE *bias_file = fopen("./dk.raw", "rb");
     
-    for (int i = 0; i < 2000; i++) {
+    for (int i = 0; i < 700; i++) {
         fread(tmp_array, 1, SX*SY*sizeof(ushort), bias_file);
         for (int j = 0;  j < SX*SY; j++) {
             float v = bias[j] - (float)tmp_array[j];
@@ -286,7 +286,7 @@ void get_std()
     }
     
     for (int j = 0; j < SX*SY; j++) {
-        dev[j] /= 2000.0;
+        dev[j] /= 700.0;
         dev[j] = sqrt(dev[j]);
         
         if (bias[j] > 12000)
@@ -339,7 +339,7 @@ int main()
     get_std();
     calc_flat();
     
-    FILE *input = fopen("./m57.raw", "rb");
+    FILE *input = fopen("./ngc6781.raw", "rb");
     
     float	cur_x;
     float	cur_y;
